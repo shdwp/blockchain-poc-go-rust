@@ -25,7 +25,6 @@ pub struct TransactionData {
     pub to: String,
     pub currency: u64,
     pub amount: u64,
-    pub signature: String,
 }
 
 impl Hashable for TransactionData {
@@ -35,7 +34,6 @@ impl Hashable for TransactionData {
         hasher.update(&self.to);
         hasher.update(self.currency.to_ne_bytes());
         hasher.update(self.amount.to_ne_bytes());
-        hasher.update(&self.signature);
 
         Hash::from_array(hasher.finalize())
     }

@@ -1,4 +1,5 @@
 use core::fmt;
+use substring::Substring;
 
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
@@ -12,6 +13,7 @@ pub struct Block {
     pub hash: Hash,
     pub previous_hash: Hash,
     pub nonce: Nonce,
+    pub signature: String,
 
     pub data: BlockData,
 }
@@ -23,6 +25,7 @@ impl Block {
             nonce: 0,
             previous_hash,
             data,
+            signature: String::new(),
         };
         block.hash = block.hash();
 
@@ -32,7 +35,14 @@ impl Block {
 
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _ = f.write_fmt(format_args!("{} {}", self.hash, self.data));
+        let hash_string = self.hash.to_string();
+        let data_string = self.data.to_string();
+
+        let _ = f.write_fmt(format_args!(
+                "{} {}",
+                hash_string.substring(0, 8),
+                data_string.substring(0, 200)
+        ));
 
         Result::Ok(())
     }
@@ -46,8 +56,8 @@ impl Hashable for Block {
         data.extend(self.previous_hash.to_ne_bytes().iter());
         data.extend(self.nonce.to_ne_bytes());
 
-        let dataJson = serde_json::to_vec(&self.data);
-        data.extend(dataJson.unwrap());
+        let data_json = serde_json::to_vec(&self.data);
+        data.extend(data_json.unwrap());
 
         hasher.update(data.as_slice());
         Hash::from_array(hasher.finalize())

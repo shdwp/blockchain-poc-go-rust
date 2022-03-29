@@ -67,7 +67,7 @@ impl Blockchain {
         self.blocks.last().unwrap()
     }
 
-    pub fn find<'a, R, T: Fn(&Block) -> Option<&'a R>>(&'a self, pred: T) -> Option<&'a R> {
+    pub fn find<R, T: Fn(&Block) -> Option<&R>>(&self, pred: T) -> Option<&R> {
         for x in self.into_iter() {
             match pred(x) {
                 Some(data) => return Some(data),
@@ -78,13 +78,11 @@ impl Blockchain {
         None
     }
 
-    pub fn find_wallet<'a>(&'a self, data_hash: Hash) -> Option<&'a WalletData> {
-        let x = self.find(|block| match &block.data {
-             BlockData::Wallet(data) => if data.hash() == data_hash { Some(&data) } else { None },
+    pub fn find_wallet(&self, data_hash: Hash) -> Option<&WalletData> {
+        self.find(|block| match &block.data {
+             BlockData::Wallet(data) => if data.hash() == data_hash { Some(data) } else { None },
             _ => None,
-        });
-
-        None
+        })
     }
 
     pub fn append(&mut self, block: &Block) -> Result<(), BlockchainError> {
@@ -101,13 +99,17 @@ impl Blockchain {
 
         match &block.data {
             BlockData::Transaction(data) => {
-                let wallet = self.find_wallet((&data.from).into());
+                let wallet_hash: Hash = hex::decode(&data.from).unwrap().into();
+                let wallet = self.find_wallet(wallet_hash);
+
                 match wallet {
-                    None => return Result::Err("wallet found".into()),
+                    None => return Result::Err("wallet not found".into()),
                     Some(wallet_data) => {
                         let public_key = PKey::public_key_from_pem(wallet_data.pubkey.as_bytes()).unwrap();
                         let data_vec: Vec<u8> = (&block.data).into();
-                        let check_result = signature::check(&public_key, data_vec.as_slice(), data.signature.as_bytes());
+
+                        let signature_bytes = hex::decode(&block.signature).unwrap();
+                        let check_result = signature::check(&public_key, data_vec.as_slice(), &signature_bytes);
 
                         match check_result {
                             Err(err) => return Result::Err(format!("signature check failed - {}", err).into()),
@@ -117,7 +119,6 @@ impl Blockchain {
                     }
                 }
             },
-
             _ => {}
         };
 

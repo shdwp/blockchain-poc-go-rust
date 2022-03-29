@@ -35,8 +35,10 @@ impl Hash {
 
 impl From<Vec<u8>> for Hash {
     fn from(vec: Vec<u8>) -> Self {
+        let array: [u8; 32] = vec.try_into().unwrap_or([0; 32]);
+
         Self {
-            data: vec.try_into().unwrap()
+            data: array
         }
     }
 }
@@ -45,6 +47,12 @@ impl From<&String> for Hash {
     fn from(s: &String) -> Self {
         let data = hex::decode(s).unwrap();
         data.into()
+    }
+}
+
+impl From<Hash> for String {
+    fn from(h: Hash) -> Self {
+        hex::encode(h.data)
     }
 }
 
