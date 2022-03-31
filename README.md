@@ -11,3 +11,4 @@ Blockchain learning project, made in Go and Rust.
 * Blockchain itself
 * JSON serialization/deserialization
 * PKCS transaction signing & verification
+* Mining blocks based on hash prefix difficulty

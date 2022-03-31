@@ -23,11 +23,12 @@ func MakeBlock(from string, data BlockData, sign string, nonce uint64, prevHash 
 }
 
 func MineBlock(chain *Blockchain, from string, data BlockData, sign string, prevHash string) Block {
-	const maxAttempts = 1024
+	const maxAttempts = 10000000
 
 	block := MakeBlock(from, data, sign, 0, prevHash)
-	for attempt := 0; attempt < maxAttempts && !strings.HasPrefix(block.Hash(), chain.Difficulty); attempt++ {
-		block = MakeBlock(from, data, sign, block.Nonce+1, prevHash)
+	attempt := 0
+	for ; attempt < maxAttempts && !strings.HasPrefix(block.Hash(), chain.Difficulty); attempt++ {
+		block.Nonce = uint64(attempt)
 	}
 
 	return block

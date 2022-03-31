@@ -15,7 +15,7 @@ type Blockchain struct {
 }
 
 func MakeBlockchain() Blockchain {
-	return Blockchain{make([]*Block, 0), 0, "0"}
+	return Blockchain{make([]*Block, 1), 0, "0000"}
 }
 
 func (c *Blockchain) InsertAdminWallet(publicKey, privateKey string) {
@@ -66,7 +66,7 @@ func (c *Blockchain) Find(typeId string, pred func(*Block) bool) func() *Block {
 	i := 0
 
 	return func() *Block {
-		for ; i < len(c.Blocks); {
+		for i < len(c.Blocks) {
 			block := c.Blocks[i]
 			i++
 			if block.Data.TypeId() == typeId && pred(block) {
@@ -90,7 +90,7 @@ func (c *Blockchain) From(hash string) func() (int, *Block) {
 	}
 
 	return func() (int, *Block) {
-		for ; i < len(c.Blocks); {
+		for i < len(c.Blocks) {
 			block := c.Blocks[i]
 			i++
 			return i - 1, block
