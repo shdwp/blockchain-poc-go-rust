@@ -18,9 +18,14 @@ pub enum BlockData {
 
 impl fmt::Display for BlockData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        serde_json::to_string(&self)
-            .map_err(|_| fmt::Error::default())
-            .and_then(|js| f.write_str(&js))
+        match self {
+            BlockData::Wallet(data) => f.write_fmt(format_args!("{}", data)),
+            BlockData::Transaction(data) => f.write_fmt(format_args!("{}", data)),
+
+            _ => serde_json::to_string(&self)
+                    .map_err(|_| fmt::Error::default())
+                    .and_then(|js| f.write_str(&js)),
+        }
     }
 }
 
@@ -33,7 +38,7 @@ impl From<&BlockData> for Vec<u8> {
 impl Hashable for BlockData {
     fn hash(&self) -> Hash {
         match self {
-            BlockData::Empty => Hash::empty(),
+            BlockData::Empty => Hash::new(),
             BlockData::Wallet(data) => data.hash(),
             BlockData::Transaction(data) => data.hash(),
         }

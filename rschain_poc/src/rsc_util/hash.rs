@@ -1,10 +1,15 @@
 use core::fmt;
 use serde::{Deserialize, Serialize};
-use std::{ops::Index};
+use thiserror;
+use std::ops::Index;
 
 use sha2::digest::generic_array::{GenericArray, ArrayLength};
 
-use super::error::BlockchainError;
+#[derive(thiserror::Error, Debug)]
+pub enum HashError {
+    #[error("Invalid size")]
+    InvalidSize,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Hash {
@@ -12,7 +17,7 @@ pub struct Hash {
 }
 
 impl Hash {
-    pub fn empty() -> Hash {
+    pub fn new() -> Hash {
         Hash { data: [0; 32] }
     }
 
@@ -22,24 +27,33 @@ impl Hash {
 }
 
 impl TryFrom<Vec<u8>> for Hash {
-    type Error = BlockchainError;
+    type Error = anyhow::Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        value.try_into().map_or_else(|_| Err("invalid input size".into()), |data| Ok(Self { data }))
+    fn try_from(value: Vec<u8>) -> anyhow::Result<Self> {
+        Ok(value
+            .try_into()
+            .map(|data| Hash { data })
+            .map_err(|_| HashError::InvalidSize)?)
     }
 }
 
-impl<T: ArrayLength<u8>> From<GenericArray<u8, T>> for Hash {
-    fn from(array: GenericArray<u8, T>) -> Self {
-        Hash { data: array.as_slice().try_into().unwrap() }
+impl<T: ArrayLength<u8>> TryFrom<GenericArray<u8, T>> for Hash {
+    type Error = HashError;
+
+    fn try_from(value: GenericArray<u8, T>) -> Result<Self, Self::Error> {
+        Ok(value
+            .as_slice()
+            .try_into()
+            .map(|data| Hash { data })
+            .map_err(|_| HashError::InvalidSize)?)
     }
 }
 
 impl TryFrom<&String> for Hash {
-    type Error = BlockchainError;
+    type Error = anyhow::Error;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
-        hex::decode(value).map_or_else(|e| Err(e.to_string().into()), |d| Hash::try_from(d))
+        hex::decode(value).and_then(|data| Ok(data.try_into()))?
     }
 }
 

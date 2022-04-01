@@ -22,7 +22,7 @@ pub struct Block {
 impl Block {
     pub fn new(previous_hash: Hash, data: BlockData) -> Block {
         Block {
-            hash: Hash::empty(),
+            hash: Hash::new(),
             nonce: 0,
             previous_hash,
             data,
@@ -66,7 +66,7 @@ impl Hashable for Block {
         let data_bytes: Vec<u8> = (&self.data).into();
         hasher.update(data_bytes);
 
-        hasher.finalize().into()
+        hasher.finalize().try_into().expect("hasher/Hash incompat")
     }
 }
 
