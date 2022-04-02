@@ -4,15 +4,15 @@ use substring::Substring;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
 
-use crate::rsc_util::hash::{Hash, Hashable};
+use crate::rsc_util::hash::{ByteHash, Hashable};
 use crate::rsc_blockdata::BlockData;
 
 pub type Nonce = u64;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
-    pub hash: Hash,
-    pub previous_hash: Hash,
+    pub hash: ByteHash,
+    pub previous_hash: ByteHash,
     pub nonce: Nonce,
     pub signature: String,
 
@@ -20,9 +20,9 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new(previous_hash: Hash, data: BlockData) -> Block {
+    pub fn new(previous_hash: ByteHash, data: BlockData) -> Block {
         Block {
-            hash: Hash::new(),
+            hash: ByteHash::new(),
             nonce: 0,
             previous_hash,
             data,
@@ -52,7 +52,7 @@ impl fmt::Display for Block {
 }
 
 impl Hashable for Block {
-    fn hash(&self) -> Hash {
+    fn hash(&self) -> ByteHash {
         let mut hasher = Sha256::new();
         let mut data = Vec::<u8>::new();
 

@@ -4,15 +4,15 @@ use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
 use substring::Substring;
 
-use crate::rsc_util::hash::{Hashable, Hash};
+use crate::rsc_util::hash::{Hashable, ByteHash};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalletData {
     pub pubkey: String,
 }
 
 impl Hashable for WalletData {
-    fn hash(&self) -> Hash {
+    fn hash(&self) -> ByteHash {
         let mut hasher = Sha256::new();
         hasher.update(&self.pubkey);
 
@@ -28,7 +28,7 @@ impl Display for WalletData {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionData {
     pub from: String,
     pub to: String,
@@ -37,7 +37,7 @@ pub struct TransactionData {
 }
 
 impl Hashable for TransactionData {
-    fn hash(&self) -> Hash {
+    fn hash(&self) -> ByteHash {
         let mut hasher = Sha256::new();
         hasher.update(&self.from);
         hasher.update(&self.to);

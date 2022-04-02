@@ -67,37 +67,31 @@ impl Shard {
 
     fn push_impl(&mut self, block: Block) -> anyhow::Result<()> {
         let mut new_chains = Vec::<Blockchain>::new();
+        let result: anyhow::Result<()>;
 
-        let mut added = false;
-        for chain in &mut self.chains {
-            if !chain.into_iter().any(|b| b.hash == (&block).hash) {
+        {
+            result = self.chains.iter_mut().map(|chain: &mut Blockchain| -> anyhow::Result<()> {
+                if chain.into_iter().any(|b| b.hash == (&block).hash) {
+                    Err(ShardError::Duplicate)?
+                }
 
-                match chain.fork_if_needed(&block) {
-                    Err(_) => {},
-
-                    Ok(None) => {
-                        if chain.append(&block).is_ok() {
-                            added = true;
-                        }
-                    },
-
-                    Ok(Some(mut chain)) => {
-                        if chain.append(&block).is_ok() {
-                            added = true;
-                        }
-
-                        new_chains.push(chain);
+                chain.fork_if_needed(&block).and_then(|r| {
+                    match r {
+                        None => chain.append(&block),
+                        Some(mut new_chain) => { new_chain.append(&block)?; new_chains.push(new_chain); Ok(()) }
                     }
-                };
+                })
+            }).fold(Ok(()), |a, r| {
+                if r.is_err() {
+                    dbg!(r.err());
+                }
 
-            }
+                a
+            })
         }
 
         self.chains.append(&mut new_chains);
-        return match added {
-            true => Ok(()),
-            false => Err(ShardError::Rejected.into()),
-        };
+        return result;
     }
 
     fn update_longest_chain_idx(&mut self) {
@@ -135,10 +129,10 @@ impl Debug for Shard {
 
 impl Display for Shard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Longest: {:?} ", self.lead_idx))?;
-        for (i, chain) in (&self.chains).into_iter().enumerate() {
-            f.write_fmt(format_args!("chain {}:\n{}", i, chain))?;
-        }
+        match self.lead_idx {
+            Some(idx) => f.write_fmt(format_args!("[Chain {} out of {}]\n{}", idx + 1, self.chains.len(), self.chains[idx])),
+            None => f.write_str("Empty"),
+        }?;
 
         Ok(())
     }

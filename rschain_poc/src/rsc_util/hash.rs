@@ -11,14 +11,14 @@ pub enum HashError {
     InvalidSize,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Hash {
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct ByteHash {
     data: [u8; 32]
 }
 
-impl Hash {
-    pub fn new() -> Hash {
-        Hash { data: [0; 32] }
+impl ByteHash {
+    pub fn new() -> ByteHash {
+        ByteHash { data: [0; 32] }
     }
 
     pub fn to_ne_bytes(&self) -> [u8; 32] {
@@ -26,30 +26,30 @@ impl Hash {
     }
 }
 
-impl TryFrom<Vec<u8>> for Hash {
+impl TryFrom<Vec<u8>> for ByteHash {
     type Error = anyhow::Error;
 
     fn try_from(value: Vec<u8>) -> anyhow::Result<Self> {
         Ok(value
             .try_into()
-            .map(|data| Hash { data })
+            .map(|data| ByteHash { data })
             .map_err(|_| HashError::InvalidSize)?)
     }
 }
 
-impl<T: ArrayLength<u8>> TryFrom<GenericArray<u8, T>> for Hash {
+impl<T: ArrayLength<u8>> TryFrom<GenericArray<u8, T>> for ByteHash {
     type Error = HashError;
 
     fn try_from(value: GenericArray<u8, T>) -> Result<Self, Self::Error> {
         Ok(value
             .as_slice()
             .try_into()
-            .map(|data| Hash { data })
+            .map(|data| ByteHash { data })
             .map_err(|_| HashError::InvalidSize)?)
     }
 }
 
-impl TryFrom<&String> for Hash {
+impl TryFrom<&String> for ByteHash {
     type Error = anyhow::Error;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
@@ -57,23 +57,29 @@ impl TryFrom<&String> for Hash {
     }
 }
 
-impl From<Hash> for String {
-    fn from(h: Hash) -> Self {
+impl From<ByteHash> for String {
+    fn from(h: ByteHash) -> Self {
         hex::encode(h.data)
     }
 }
 
 pub trait Hashable {
-    fn hash(&self) -> Hash;
+    fn hash(&self) -> ByteHash;
 }
 
-impl fmt::Display for Hash {
+impl fmt::Display for ByteHash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_fmt(format_args!("{}", hex_fmt::HexFmt(self.data)))
     }
 }
 
-impl Index<usize> for Hash {
+impl fmt::Debug for ByteHash {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("{}", hex_fmt::HexFmt(self.data)))
+    }
+}
+
+impl Index<usize> for ByteHash {
     type Output = u8;
 
     fn index(&self, index: usize) -> &Self::Output {

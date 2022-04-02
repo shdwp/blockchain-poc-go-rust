@@ -5,11 +5,11 @@ use std::fmt;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::rsc_util::hash::{Hash, Hashable};
+use crate::rsc_util::hash::{ByteHash, Hashable};
 use crate::rsc_blockdata::block_data::TransactionData;
 use crate::rsc_blockdata::block_data::WalletData;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BlockData {
     Empty,
     Wallet(WalletData),
@@ -36,9 +36,9 @@ impl From<&BlockData> for Vec<u8> {
 }
 
 impl Hashable for BlockData {
-    fn hash(&self) -> Hash {
+    fn hash(&self) -> ByteHash {
         match self {
-            BlockData::Empty => Hash::new(),
+            BlockData::Empty => ByteHash::new(),
             BlockData::Wallet(data) => data.hash(),
             BlockData::Transaction(data) => data.hash(),
         }
