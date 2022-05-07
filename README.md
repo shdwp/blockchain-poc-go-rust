@@ -9,6 +9,7 @@ Blockchain learning project, made in Go and Rust.
 
 ### Rust implementation:
 * Blockchain itself
+* Chain forking, with chains lesser in length being eventually discarded
 * JSON serialization/deserialization
 * PKCS transaction signing & verification
 * Mining blocks based on hash prefix difficulty
